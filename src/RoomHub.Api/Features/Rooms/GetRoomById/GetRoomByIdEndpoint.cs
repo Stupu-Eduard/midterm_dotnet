@@ -1,11 +1,12 @@
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.EntityFrameworkCore;
 using RoomHub.Api.Common;
 using RoomHub.Api.Domain.Rooms;
-using RoomHub.Api.Infrastructure.InMemory;
+using RoomHub.Api.Infrastructure.Persistence;
 
 namespace RoomHub.Api.Features.Rooms.GetRoomById;
 
-// Read slice: no command handler (reads are thin endpoints in lectures 1-6).
+// Read slice: queries the DbContext directly with AsNoTracking (no command handler).
 public static class GetRoomByIdEndpoint
 {
     public sealed record Response(Guid Id, string Name, int Capacity);
@@ -16,10 +17,13 @@ public static class GetRoomByIdEndpoint
 
     private static async Task<Results<Ok<Response>, ProblemHttpResult>> Handle(
         Guid id,
-        RoomRepository rooms,
+        RoomHubDbContext db,
         CancellationToken ct)
     {
-        var room = await rooms.GetByIdAsync(id, ct);
+        var room = await db.Rooms
+            .AsNoTracking()
+            .FirstOrDefaultAsync(r => r.Id == id, ct);
+
         if (room is null)
             return RoomErrors.NotFound.ToProblem();
 

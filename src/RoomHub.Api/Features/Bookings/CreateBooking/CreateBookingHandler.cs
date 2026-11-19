@@ -2,7 +2,6 @@ using RoomHub.Api.Common.Cqrs;
 using RoomHub.Api.Domain.Bookings;
 using RoomHub.Api.Domain.Common;
 using RoomHub.Api.Domain.Rooms;
-using RoomHub.Api.Infrastructure.InMemory;
 
 namespace RoomHub.Api.Features.Bookings.CreateBooking;
 
@@ -16,8 +15,9 @@ public sealed record CreateBookingCommand(
 public sealed record CreateBookingResult(Guid Id, Guid RoomId, BookingStatus Status);
 
 public sealed class CreateBookingHandler(
-    RoomRepository rooms,
-    BookingRepository bookings,
+    IRoomRepository rooms,
+    IBookingRepository bookings,
+    IUnitOfWork unitOfWork,
     TimeProvider time)
     : ICommandHandler<CreateBookingCommand, CreateBookingResult>
 {
@@ -30,6 +30,7 @@ public sealed class CreateBookingHandler(
         if (room is null)
             return RoomErrors.NotFound;
 
+        // R7: active bookings of this room.
         var activeBookings = await bookings.GetActiveForRoomAsync(room.Id, cancellationToken);
 
         // R9: the participant's active bookings (all rooms); the domain counts the ones on the same day.
@@ -52,6 +53,7 @@ public sealed class CreateBookingHandler(
 
         var booking = result.Value;
         bookings.Add(booking);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return new CreateBookingResult(booking.Id, booking.RoomId, booking.Status);
     }

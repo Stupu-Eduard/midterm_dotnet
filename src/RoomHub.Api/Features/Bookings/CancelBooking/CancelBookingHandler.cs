@@ -1,13 +1,12 @@
 using RoomHub.Api.Common.Cqrs;
 using RoomHub.Api.Domain.Bookings;
 using RoomHub.Api.Domain.Common;
-using RoomHub.Api.Infrastructure.InMemory;
 
 namespace RoomHub.Api.Features.Bookings.CancelBooking;
 
 public sealed record CancelBookingCommand(Guid BookingId) : ICommand<Unit>;
 
-public sealed class CancelBookingHandler(BookingRepository bookings)
+public sealed class CancelBookingHandler(IBookingRepository bookings, IUnitOfWork unitOfWork)
     : ICommandHandler<CancelBookingCommand, Unit>
 {
     public async Task<Result<Unit>> Handle(
@@ -22,6 +21,7 @@ public sealed class CancelBookingHandler(BookingRepository bookings)
         if (result.IsFailure)
             return result.Error;
 
+        await unitOfWork.SaveChangesAsync(cancellationToken);
         return Unit.Value;
     }
 }
