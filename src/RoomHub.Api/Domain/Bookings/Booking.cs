@@ -6,6 +6,8 @@ namespace RoomHub.Api.Domain.Bookings;
 public sealed class Booking
 {
     public static readonly TimeSpan MaxDuration = TimeSpan.FromHours(4);
+    public const int LargeRoomCapacityThreshold = 10;
+    public static readonly TimeSpan LargeRoomMaxDuration = TimeSpan.FromHours(2);
     public const int MaxActiveBookingsPerDay = 2;
 
     private Booking() { }
@@ -48,6 +50,10 @@ public sealed class Booking
         // R5: "now" is passed in by the caller (from TimeProvider).
         if (period.StartUtc < nowUtc)
             return BookingErrors.StartInPast;
+
+        // R10: rooms with capacity > 10 allow at most 2 hours (exactly 2h allowed).
+        if (room.Capacity > LargeRoomCapacityThreshold && period.Duration > LargeRoomMaxDuration)
+            return BookingErrors.TooLongForLargeRoom;
 
         // R6: exactly 4 hours is allowed.
         if (period.Duration > MaxDuration)

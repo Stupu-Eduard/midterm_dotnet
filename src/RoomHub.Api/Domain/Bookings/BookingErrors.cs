@@ -22,6 +22,9 @@ public static class BookingErrors
     public static readonly Error TooLong =
         Error.Validation("Bookings.TooLong", "A booking can last at most 4 hours.");
 
+    public static readonly Error TooLongForLargeRoom =
+        Error.Validation("Bookings.TooLongForLargeRoom", "Rooms with capacity greater than 10 can be booked for at most 2 hours.");
+
     public static readonly Error RoomOccupied =
         Error.Conflict("Bookings.RoomOccupied", "The room is occupied in this interval.");
 
