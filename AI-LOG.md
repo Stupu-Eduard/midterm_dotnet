@@ -8,6 +8,5 @@ Write down, in order, what you asked the AI. It is not a punishment: a missing o
 | 09:14 | Make all the changes so level B is done: domain, result, handlers,TimeProvider| Result<T>/Error, DateRange.Overlap,Domain/Common, Room.Create,Booking.Create | Nothing, just performed HTTP tests |
 | 09:31 | Implement the new requirement R9: max 2 active booking per day per bookedBy, the third one gets 409. Here is all the requirement: ... | Rule in Booking.Create(domain), new repository method GetActiveByBookedByAsync, handler passes the data to the domain, error BookingErrors.DailyLimitReached (409)| The Ai first reported 2 failing tests, but the mistake was in its test script (the slot was already taken by another person), not in the code. It re-ran them on a free slot and they passed. + manual build test and http requests |
 | 09:40 | I requested EF Core + SQLite + Repository/Unit of Work | Kept the interfaces from the Domain,DbContext,Configurations and Repositories | I manually installed NuGet |
-| 09:45 | To make the new assignment R10 and gave the task| all changes | all changes |
-
-| 09:02 | To make the necesarry changes for the first commit, which are the Level A tasks: restructure in Features/, 5 slices| all changes | all changes |
+| 09:45 | To make the new assignment R10 and gave the task| Two files from the domain: Booking.cs and BookingErrors.cs | nothing |
+| 09:48 | To make a final thorough check on all the project by also using tests everything based on the Assignment file and the new requests provided in the prompts| Previous JSON returned 400 like text/plain. Now they return 400 application/problem+json | nothing |

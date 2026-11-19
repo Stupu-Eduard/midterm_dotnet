@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using RoomHub.Api.Common.Cqrs;
 using RoomHub.Api.Domain.Bookings;
@@ -18,9 +19,18 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 // Controllable time: handlers read "now" from TimeProvider and pass it to the domain.
 builder.Services.AddSingleton(TimeProvider.System);
 
-// EF Core + SQLite (Scoped).
+// Framework errors (malformed JSON, missing body) are also returned as ProblemDetails.
+builder.Services.AddProblemDetails();
+
+// EF Core + SQLite (Scoped). A relative database path is anchored to the content root,
+// so the same file is used no matter which folder the app is started from.
+var sqlite = new SqliteConnectionStringBuilder(
+    builder.Configuration.GetConnectionString("RoomHub") ?? "Data Source=roomhub.db");
+if (!Path.IsPathRooted(sqlite.DataSource))
+    sqlite.DataSource = Path.Combine(builder.Environment.ContentRootPath, sqlite.DataSource);
+
 builder.Services.AddDbContext<RoomHubDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("RoomHub") ?? "Data Source=roomhub.db"));
+    options.UseSqlite(sqlite.ToString()));
 
 // Unit of Work must be the SAME scoped DbContext instance the repositories use.
 builder.Services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<RoomHubDbContext>());
