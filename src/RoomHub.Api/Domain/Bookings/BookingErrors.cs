@@ -25,6 +25,9 @@ public static class BookingErrors
     public static readonly Error RoomOccupied =
         Error.Conflict("Bookings.RoomOccupied", "The room is occupied in this interval.");
 
+    public static readonly Error DailyLimitReached =
+        Error.Conflict("Bookings.DailyLimitReached", "A participant can have at most 2 active bookings per day.");
+
     public static readonly Error AlreadyCancelled =
         Error.Conflict("Bookings.AlreadyCancelled", "The booking is already cancelled.");
 }

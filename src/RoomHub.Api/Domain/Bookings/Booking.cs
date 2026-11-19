@@ -6,6 +6,7 @@ namespace RoomHub.Api.Domain.Bookings;
 public sealed class Booking
 {
     public static readonly TimeSpan MaxDuration = TimeSpan.FromHours(4);
+    public const int MaxActiveBookingsPerDay = 2;
 
     private Booking() { }
 
@@ -23,6 +24,7 @@ public sealed class Booking
         DateTime endUtc,
         int attendees,
         IEnumerable<Booking> existingRoomBookings,
+        IEnumerable<Booking> bookedByActiveBookings,
         DateTime nowUtc)
     {
         // R2
@@ -54,6 +56,14 @@ public sealed class Booking
         // R7: only active bookings block the interval (a cancelled one frees it, R8).
         if (existingRoomBookings.Any(b => b.Status == BookingStatus.Active && b.Period.Overlaps(period)))
             return BookingErrors.RoomOccupied;
+
+        // R9: at most 2 active bookings per participant per UTC day (day = date of StartUtc), across all rooms.
+        var day = period.StartUtc.Date;
+        var activeSameDay = bookedByActiveBookings.Count(b =>
+            b.Status == BookingStatus.Active && b.Period.StartUtc.Date == day);
+
+        if (activeSameDay >= MaxActiveBookingsPerDay)
+            return BookingErrors.DailyLimitReached;
 
         return new Booking
         {

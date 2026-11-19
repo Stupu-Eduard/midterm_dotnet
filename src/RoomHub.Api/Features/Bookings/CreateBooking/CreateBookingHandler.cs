@@ -32,6 +32,11 @@ public sealed class CreateBookingHandler(
 
         var activeBookings = await bookings.GetActiveForRoomAsync(room.Id, cancellationToken);
 
+        // R9: the participant's active bookings (all rooms); the domain counts the ones on the same day.
+        IReadOnlyList<Booking> bookedByActive = string.IsNullOrWhiteSpace(command.BookedBy)
+            ? []
+            : await bookings.GetActiveByBookedByAsync(command.BookedBy.Trim(), cancellationToken);
+
         var result = Booking.Create(
             room,
             command.BookedBy,
@@ -39,6 +44,7 @@ public sealed class CreateBookingHandler(
             command.EndUtc,
             command.Attendees,
             activeBookings,
+            bookedByActive,
             time.GetUtcNow().UtcDateTime);
 
         if (result.IsFailure)

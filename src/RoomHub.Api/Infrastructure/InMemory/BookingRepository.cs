@@ -27,6 +27,18 @@ public sealed class BookingRepository
         }
     }
 
+    // R9: active bookings of one participant, across all rooms.
+    public Task<IReadOnlyList<Booking>> GetActiveByBookedByAsync(string bookedBy, CancellationToken cancellationToken)
+    {
+        lock (_lock)
+        {
+            IReadOnlyList<Booking> result = _bookings
+                .Where(b => b.BookedBy == bookedBy && b.Status == BookingStatus.Active)
+                .ToList();
+            return Task.FromResult(result);
+        }
+    }
+
     public void Add(Booking booking)
     {
         lock (_lock)
