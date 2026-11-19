@@ -1,5 +1,6 @@
-namespace RoomHub.Api.Models;
+namespace RoomHub.Api.Domain.Rooms;
 
+// Level A: still anemic. Becomes a rich entity in level B.
 public class Room
 {
     public Guid Id { get; set; }

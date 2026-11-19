@@ -1,8 +1,8 @@
-using RoomHub.Api.Models;
+using RoomHub.Api.Domain.Bookings;
 
-namespace RoomHub.Api.Repositories;
+namespace RoomHub.Api.Infrastructure.InMemory;
 
-// Starter: in-memory data. It is lost when the application restarts.
+// Level A: in-memory data, lost on restart. Replaced by EF Core + SQLite in level C.
 public class BookingRepository
 {
     private readonly List<Booking> _bookings = new();
