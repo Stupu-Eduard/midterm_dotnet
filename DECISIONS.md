@@ -7,12 +7,12 @@ An unanswered question gives 0 points.
 ## 1. A rule you moved
 Pick one business rule (R1–R8). In which file did it live in the starter and in which file does it live now? Why there?
 
-_(your answer here)_
+R7. Was in BookingService.cs, now is in DateRange.cs.  It's a domain rule, so it lives in one place and is testable without HTTP or a DB.
 
 ## 2. Result instead of an exception
 Why is `Result` a better choice than an exception for "the room is occupied"? What happens in your code when an `Error` is returned?
 
-_(your answer here)_
+Result. "Occupied" is an expected outcome, and a Result makes it explicit in the method. Booking.Create returns RoomOccupied , handler returns the error without saving , endpoint calls .ToProblem() , 409.
 
 ## 3. Who knows about EF Core?
 Which classes in your project know about EF Core and which do not? What do you gain and what do you pay with Repository + Unit of Work?
