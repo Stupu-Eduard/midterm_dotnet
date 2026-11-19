@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using RoomHub.Api.Common;
-using RoomHub.Api.Domain.Bookings;
-using RoomHub.Api.Infrastructure.InMemory;
+using RoomHub.Api.Common.Cqrs;
 
 namespace RoomHub.Api.Features.Bookings.CreateBooking;
 
@@ -15,46 +14,21 @@ public static class CreateBookingEndpoint
         group.MapPost("/", Handle)
             .WithName("CreateBooking");
 
-    private static Created<Response> Handle(
+    private static async Task<Results<Created<Response>, ProblemHttpResult>> Handle(
         Guid roomId,
         Request request,
-        RoomRepository rooms,
-        BookingRepository bookings)
+        ICommandHandler<CreateBookingCommand, CreateBookingResult> handler,
+        CancellationToken ct)
     {
-        var room = rooms.Get(roomId)
-            ?? throw new BusinessException("RoomNotFound", "The room does not exist.", 404);
+        var command = new CreateBookingCommand(
+            roomId, request.BookedBy, request.StartUtc, request.EndUtc, request.Attendees);
 
-        if (string.IsNullOrWhiteSpace(request.BookedBy))
-            throw new BusinessException("InvalidBookedBy", "BookedBy is required.", 400);
+        var result = await handler.Handle(command, ct);
 
-        if (request.EndUtc <= request.StartUtc)
-            throw new BusinessException("InvalidRange", "The end must be after the start.", 400);
+        if (result.IsFailure)
+            return result.Error.ToProblem();
 
-        if (request.Attendees <= 0)
-            throw new BusinessException("InvalidAttendees", "Attendees must be positive.", 400);
-
-        if (request.Attendees > room.Capacity)
-            throw new BusinessException("AttendeesExceedCapacity", "The room does not have enough seats.", 400);
-
-        foreach (var existing in bookings.ListForRoom(roomId))
-        {
-            if (existing.StartUtc <= request.EndUtc && request.StartUtc <= existing.EndUtc)
-                throw new BusinessException("RoomOccupied", "The room is occupied in this interval.", 409);
-        }
-
-        var booking = new Booking
-        {
-            Id = Guid.NewGuid(),
-            RoomId = roomId,
-            BookedBy = request.BookedBy.Trim(),
-            StartUtc = request.StartUtc,
-            EndUtc = request.EndUtc,
-            Attendees = request.Attendees,
-            Status = BookingStatus.Active
-        };
-
-        bookings.Add(booking);
-
+        var booking = result.Value;
         return TypedResults.Created(
             $"/api/bookings/{booking.Id}",
             new Response(booking.Id, booking.RoomId, booking.Status.ToString()));

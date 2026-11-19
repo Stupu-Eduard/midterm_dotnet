@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using RoomHub.Api.Common;
+using RoomHub.Api.Domain.Bookings;
 using RoomHub.Api.Infrastructure.InMemory;
 
 namespace RoomHub.Api.Features.Bookings.GetBookingById;
 
+// Read slice: no command handler (reads are thin endpoints in lectures 1-6).
 public static class GetBookingByIdEndpoint
 {
     public sealed record Response(
@@ -19,12 +21,22 @@ public static class GetBookingByIdEndpoint
         group.MapGet("/{id:guid}", Handle)
             .WithName("GetBookingById");
 
-    private static Ok<Response> Handle(Guid id, BookingRepository bookings)
+    private static async Task<Results<Ok<Response>, ProblemHttpResult>> Handle(
+        Guid id,
+        BookingRepository bookings,
+        CancellationToken ct)
     {
-        var b = bookings.Get(id)
-            ?? throw new BusinessException("BookingNotFound", "The booking does not exist.", 404);
+        var b = await bookings.GetByIdAsync(id, ct);
+        if (b is null)
+            return BookingErrors.NotFound.ToProblem();
 
         return TypedResults.Ok(new Response(
-            b.Id, b.RoomId, b.BookedBy, b.StartUtc, b.EndUtc, b.Attendees, b.Status.ToString()));
+            b.Id,
+            b.RoomId,
+            b.BookedBy,
+            b.Period.StartUtc,
+            b.Period.EndUtc,
+            b.Attendees,
+            b.Status.ToString()));
     }
 }
